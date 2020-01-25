@@ -3,6 +3,7 @@ import React, {useEffect, useState} from 'react';
 import styles from './styles.module.scss';
 import {render} from 'enzyme';
 import {getLocationOrigin} from 'next/dist/next-server/lib/utils';
+import {useEventListener} from '../utils/event.util';
 
 const makeRequest = async params => {
   const url = `https://challenge20.appspot.com/?${params}`;
@@ -41,6 +42,20 @@ const Pathfinder = () => {
   useEffect(() => {
     getInitialStuff();
   }, []);
+
+  if (process.browser) {
+    useEventListener('keydown', event => {
+      if (event.key === 'ArrowUp') {
+        moveForward();
+      }
+      if (event.key === 'ArrowLeft') {
+        rotateLeft();
+      }
+      if (event.key === 'ArrowRight') {
+        rotateRight();
+      }
+    });
+  }
 
   useEffect(() => {
     addLocationToMap();
