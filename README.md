@@ -1,27 +1,10 @@
-# Example app with Jest tests
+# John Lewis coding challenge 20 (mega challenge)
 
-This example features an app with jest tests.
+<img src='screenshot.png'>
 
-## How to use
+Solve a maze via api and Next JS
 
-### Using `create-next-app`
-
-Execute [`create-next-app`](https://github.com/zeit/next.js/tree/canary/packages/create-next-app) with [npm](https://docs.npmjs.com/cli/init) or [Yarn](https://yarnpkg.com/lang/en/docs/cli/create/) to bootstrap the example:
-
-```bash
-npm init next-app --example with-jest with-jest-app
-# or
-yarn create next-app --example with-jest with-jest-app
-```
-
-### Download manually
-
-Download the example:
-
-```bash
-curl https://codeload.github.com/zeit/next.js/tar.gz/canary | tar -xz --strip=2 next.js-canary/examples/with-jest
-cd with-jest
-```
+### Installation
 
 Install it and run:
 
@@ -31,12 +14,4 @@ npm run dev
 # or
 yarn
 yarn dev
-```
-
-## Run Jest tests
-
-```bash
-npm run test
-# or
-yarn test
 ```
