@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, {useEffect, useState} from 'react';
 
 import styles from './styles.module.scss';
-import { render } from 'enzyme';
-import { getLocationOrigin } from 'next/dist/next-server/lib/utils';
+import {render} from 'enzyme';
+import {getLocationOrigin} from 'next/dist/next-server/lib/utils';
 
 const makeRequest = async params => {
   const url = `https://challenge20.appspot.com/?${params}`;
@@ -14,7 +14,7 @@ const makeRequest = async params => {
 const paramBuilder = ({
   command = 'M',
   referenceid = 'MSwxLEU=',
-  repeat = 1
+  repeat = 1,
 }) => {
   //https://challenge20.appspot.com/?command=M&referenceid=MTEsOCxF&repeat=1
   return `command=${command}&referenceid=${referenceid}&repeat=${repeat}`;
@@ -24,70 +24,27 @@ const parseResponse = data => {
   const parsed = data.split(',');
   const referenceid = parsed[0];
   const corridor = parsed.slice(1);
-  return { referenceid, corridor };
+  return {referenceid, corridor};
 };
 
 const Pathfinder = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [pathArray, setPathArray] = useState([]);
-  const [corridor, setCorridor] = useState('');
   const [facingDirection, setFacingDirection] = useState(0);
-  const [initialReferenceid, setInitialReferenceid] = useState('');
-  const [gameMap, setGameMap] = useState([]);
-
-  /*
-  [
-    [*, *, *, * ],
-    [*, ., ., * ],
-    [' ', '.', '*', ' ' ]
-
-*****
-*...*
-***.*
-**..*
-**.**
-*X..*
-*****    ]
-  */
+  const [location, setLocation] = useState([0, 0]);
+  const [gameMap, setGameMap] = useState([[]]);
 
   const updatePathArray = data => {
     setPathArray([...pathArray, data]);
   };
-
-  const updateGameMap = ({ corridor }) => {
-    const mappedCorridor = corridor.map(direction => {
-      switch (direction) {
-        default:
-        case 'O':
-        case 'OL':
-        case 'OR': {
-          return '.';
-        }
-      }
-    });
-
-    const mappedWithWall = [...mappedCorridor, '*'];
-
-    setGameMap([...gameMap, mappedWithWall]);
-  };
-
-  const printGameMap = () => {
-    gameMap.forEach(row => {
-      console.log(row.join(''));
-    });
-  };
-
-  useEffect(() => {
-    printGameMap();
-  }, [gameMap]);
 
   useEffect(() => {
     getInitialStuff();
   }, []);
 
   useEffect(() => {
-    setCorridor(renderLastCorridor());
-  }, [pathArray]);
+    addLocationToMap();
+  }, [location]);
 
   const getCurrentPath = () => {
     return pathArray[pathArray.length - 1];
@@ -96,14 +53,12 @@ const Pathfinder = () => {
   const getInitialStuff = async () => {
     const initialStuff = await makeRequest();
     const parsedInitialStuff = parseResponse(initialStuff);
-    const { referenceid } = parsedInitialStuff;
-    setInitialReferenceid(referenceid);
     updatePathArray(parsedInitialStuff);
-    updateGameMap(parsedInitialStuff);
+    setGameMap([['.']]);
     setIsLoading(false);
   };
 
-  const PathBlock = ({ direction }) => {
+  const PathBlock = ({direction}) => {
     switch (direction) {
       default:
       case 'O': {
@@ -119,9 +74,23 @@ const Pathfinder = () => {
         return <pre>&larr;[ ]&rarr;</pre>;
       }
       case 'X': {
-        return <pre> [ 🏆] </pre>;
+        return <pre> [🏆] </pre>;
       }
     }
+  };
+
+  const addLocationToMap = () => {
+    const newGameMap = gameMap.slice(0);
+
+    while (newGameMap.length - 1 < location[1]) {
+      newGameMap.push([]);
+    }
+    while (newGameMap[location[1]].length - 1 < location[0]) {
+      newGameMap[location[1]].push(' ');
+    }
+    newGameMap[location[1]][location[0]] = ['*'];
+    setGameMap(newGameMap);
+    console.log(newGameMap);
   };
 
   const renderLastCorridor = () => {
@@ -137,7 +106,7 @@ const Pathfinder = () => {
       ));
   };
 
-  const getLocation = () => {
+  const getCurrentReferenceId = () => {
     if (pathArray.length === 0) {
       return '';
     }
@@ -147,17 +116,47 @@ const Pathfinder = () => {
   const compassDirection = () => {
     switch (facingDirection) {
       case 0: {
-        return 'North';
-      }
-      case 1: {
         return 'East';
       }
-      case 2: {
+      case 1: {
         return 'South';
       }
-      case 3: {
+      case 2: {
         return 'West';
       }
+      case 3: {
+        return 'North';
+      }
+    }
+  };
+
+  const renderGameMap = () => {
+    if (gameMap[location[1]] && gameMap[location[1]][location[0]]) {
+      let arrow;
+      switch (facingDirection) {
+        case 0: {
+          arrow = '→';
+          break;
+        }
+        case 1: {
+          arrow = '↓';
+          break;
+        }
+        case 2: {
+          arrow = '←';
+          break;
+        }
+        case 3: {
+          arrow = '↑';
+          break;
+        }
+      }
+
+      const mapCopy = gameMap.slice(0);
+      mapCopy[location[1]][location[0]] = arrow;
+      return mapCopy.map(row => <pre>{row.join('')}</pre>);
+    } else {
+      return '';
     }
   };
 
@@ -166,35 +165,55 @@ const Pathfinder = () => {
     const newPath = await makeRequest(
       paramBuilder({
         command: 'L',
-        referenceid: getCurrentPath() && getCurrentPath().referenceid
-      })
+        referenceid: getCurrentPath() && getCurrentPath().referenceid,
+      }),
     );
     const parsedPath = parseResponse(newPath);
     updatePathArray(parsedPath);
-    updateGameMap(parsedPath);
   };
   const rotateRight = async () => {
     setFacingDirection((facingDirection + 1) % 4);
     const newPath = await makeRequest(
       paramBuilder({
         command: 'R',
-        referenceid: getCurrentPath() && getCurrentPath().referenceid
-      })
+        referenceid: getCurrentPath() && getCurrentPath().referenceid,
+      }),
     );
     const parsedPath = parseResponse(newPath);
     updatePathArray(parsedPath);
-    updateGameMap(parsedPath);
   };
+
   const moveForward = async () => {
     const newPath = await makeRequest(
       paramBuilder({
         command: 'M',
-        referenceid: getCurrentPath() && getCurrentPath().referenceid
-      })
+        referenceid: getCurrentPath() && getCurrentPath().referenceid,
+      }),
     );
     const parsedPath = parseResponse(newPath);
+    if (parsedPath.referenceid !== getCurrentReferenceId()) {
+      switch (facingDirection) {
+        case 0: {
+          setLocation([location[0] + 1, location[1]]);
+          break;
+        }
+        case 1: {
+          setLocation([location[0], location[1] + 1]);
+          break;
+        }
+        case 2: {
+          setLocation([location[0] - 1, location[1]]);
+          break;
+        }
+        case 3: {
+          setLocation([location[0], location[1] - 1]);
+          break;
+        }
+      }
+
+      addLocationToMap();
+    }
     updatePathArray(parsedPath);
-    updateGameMap(parsedPath);
   };
 
   const Controls = () => (
@@ -212,22 +231,28 @@ const Pathfinder = () => {
   );
 
   return (
-    <div className={styles.container}>
+    <>
       <div>Facing {compassDirection()}</div>
-      <div>Location: {getLocation()}</div>
-      <div className={styles.corridor}>
-        {isLoading && <p>'Loading'</p>}
-        <pre>/////</pre>
-        <pre>-----</pre>
-        {corridor}
-        <pre>
-          ?[<span>.</span>]?
-        </pre>
+      <div>Location {location.toString()}</div>
+      <div>referenceid: {getCurrentReferenceId()}</div>
+      <div className={styles.container}>
+        <div className={styles.column}>
+          <div className={styles.corridor}>
+            {isLoading && <p>'Loading'</p>}
+            <pre>/////</pre>
+            <pre>-----</pre>
+            {renderLastCorridor()}
+            <pre>
+              ?[<span>&uarr;</span>]?
+            </pre>
+          </div>
+        </div>
+        <div className={styles.column}>
+          <div>{renderGameMap()}</div>
+        </div>
       </div>
-
-      {/* <Moves /> */}
       <Controls />
-    </div>
+    </>
   );
 };
 
