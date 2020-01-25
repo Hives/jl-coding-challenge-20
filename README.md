@@ -1,10 +1,15 @@
 # John Lewis coding challenge 20 (mega challenge)
 
-<img src='screenshot.png'>
+Find the hidden treasure in the maze.
 
-Solve a maze via api and Next JS
+<img src="screenshot.png" width="400">
 
-### Installation
+Completed with Owen Nicol on the coding challenge mega event day, Friday 25th
+Jan 2020.
+
+<https://coding-challenges.jl-engineering.net/challenges/challenge-20/>
+
+## Installation
 
 Install it and run:
 
@@ -15,3 +20,7 @@ npm run dev
 yarn
 yarn dev
 ```
+
+## Controls
+
+Use the buttons or the arrow keys.
